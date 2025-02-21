@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 namespace Com\Daw2\Controllers;
 
 use Com\Daw2\Core\BaseController;
@@ -19,7 +20,7 @@ class ProveedoresController extends BaseController
             $condiciones['cif'] = $_GET['cif'];
         }
         if (isset($_GET['pais'])) {
-            $condiciones['pais'] = '%'.$_GET['pais'].'%';
+            $condiciones['pais'] = '%' . $_GET['pais'] . '%';
         }
         if (isset($_GET['maximo_productos'])) {
             $condiciones['maximo_productos'] = $_GET['maximo_productos'];
@@ -40,26 +41,84 @@ class ProveedoresController extends BaseController
         $pagina = $this->getPage($paginas);
 
 
-
         $proveedores = $proveedorModel->getAllProveedores($condiciones, $order, $pagina);
         $respuesta = new Respuesta(200, $proveedores);
 
         $this->view->show('json.view.php', ['respuesta' => $respuesta]);
     }
 
-    public function numeroPaginas(int $numeroTotalElementos):int{
-        return (int) ceil($numeroTotalElementos/$_ENV['limite.pagina']);
+    public function post(): void
+    {
+        $proveedorModel = new ProveedorModel();
+
+        $usuario = $_POST;
+
+        $proveedor = $proveedorModel->insert($usuario);
+
+        if ($proveedor) {
+            $respuesta = new Respuesta(201);
+        } else {
+            $respuesta = new Respuesta(400);
+        }
+
+        $this->view->show('json.view.php', ['respuesta' => $respuesta]);
+
     }
 
-    public function getPage(int $paginas):int
+    public function getById($id): void
     {
-        if(isset($_GET['page'])){
-            if($_GET['page'] > 0 && $_GET['page'] <= $paginas){
-                return (int) $_GET['page'];
+        $modelo = new ProveedorModel();
+        $proveedor = $modelo->getById($id);
+
+        if ($proveedor === false) {
+            $respuesta = new Respuesta(404);
+        }else{
+            $respuesta = new Respuesta(200, $proveedor);
+        }
+
+        $this->view->show('json.view.php', ['respuesta' => $respuesta]);
+    }
+
+    public function delte($id)
+    {
+        $proveedorModel = new ProveedorModel();
+        $proveedor = $proveedorModel->delete($id);
+        if ($proveedor) {
+            $respuesta = new Respuesta(200);
+        } else {
+            $respuesta = new Respuesta(400);
+        }
+        $this->view->show('json.view.php', ['respuesta' => $respuesta]);
+    }
+
+
+    public function numeroPaginas(int $numeroTotalElementos): int
+    {
+        return (int)ceil($numeroTotalElementos / $_ENV['limite.pagina']);
+    }
+
+    public function getPage(int $paginas): int
+    {
+        if (isset($_GET['page'])) {
+            if ($_GET['page'] > 0 && $_GET['page'] <= $paginas) {
+                return (int)$_GET['page'];
             }
         }
         return 1;
     }
 
+    public function checkErrors(array $datos): array
+    {
+        $errores = [];
 
+        if (!preg_match('/^[1-9A-Za-z]+$/', $datos['cif'])) {
+
+        }
+        // Empieza por mayúscula, contiene letras, guiones y espacios y max 10
+        if (!preg_match('/^[0-9]+$/', $datos['codigo'])) {
+
+        }
+
+        return $errores;
+    }
 }
